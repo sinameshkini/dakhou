@@ -2,13 +2,16 @@ package service
 
 import (
 	"context"
+	"dakhou/todo/pkg/db"
 	endpoint "dakhou/todo/pkg/endpoint"
 	grpc "dakhou/todo/pkg/grpc"
 	pb "dakhou/todo/pkg/grpc/pb"
 	http2 "dakhou/todo/pkg/http"
+	"dakhou/todo/pkg/repository"
 	service "dakhou/todo/pkg/service"
 	"flag"
 	"fmt"
+	"github.com/spf13/viper"
 	"net"
 	http1 "net/http"
 	"os"
@@ -83,7 +86,15 @@ func Run() {
 		tracer = opentracinggo.GlobalTracer()
 	}
 
-	svc := service.New(getServiceMiddleware(logger))
+	viper.AddConfigPath("./todo")
+	err := viper.ReadInConfig()
+	if err != nil {
+		panic(err.Error())
+	}
+
+	db := db.ConnectPGDB()
+	repo := repository.NewTodoRepo(db)
+	svc := service.New(repo, getServiceMiddleware(logger))
 	eps := endpoint.New(svc, getEndpointMiddleware(logger))
 	g := createService(eps)
 	initMetricsEndpoint(g)

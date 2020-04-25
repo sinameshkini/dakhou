@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"dakhou/todo/pkg/io"
+	"dakhou/todo/pkg/repository"
 )
 
 // TodoService describes the service.
@@ -24,7 +25,9 @@ type TodoService interface {
 	GetCatChildes(ctx context.Context, id string) (c []*io.TodoCategory, error error)
 }
 
-type basicTodoService struct{}
+type basicTodoService struct{
+	repo repository.Repository
+}
 
 func (b *basicTodoService) Get(ctx context.Context) (t []*io.Todo, error error) {
 	// TODO implement the business logic of Get
@@ -80,13 +83,15 @@ func (b *basicTodoService) GetCatChildes(ctx context.Context, id string) (c []*i
 }
 
 // NewBasicTodoService returns a naive, stateless implementation of TodoService.
-func NewBasicTodoService() TodoService {
-	return &basicTodoService{}
+func NewBasicTodoService(repository repository.Repository) TodoService {
+	return &basicTodoService{
+		repo: repository,
+	}
 }
 
 // New returns a TodoService with all of the expected middleware wired in.
-func New(middleware []Middleware) TodoService {
-	var svc TodoService = NewBasicTodoService()
+func New(repo repository.Repository, middleware []Middleware) TodoService {
+	var svc TodoService = NewBasicTodoService(repo)
 	for _, m := range middleware {
 		svc = m(svc)
 	}
