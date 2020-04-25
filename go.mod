@@ -5,6 +5,8 @@ go 1.14
 require (
 	github.com/go-kit/kit v0.10.0
 	github.com/golang/protobuf v1.4.0
+	github.com/gorilla/handlers v1.4.2
+	github.com/gorilla/mux v1.7.3
 	github.com/jinzhu/gorm v1.9.12
 	github.com/lightstep/lightstep-tracer-go v0.20.0
 	github.com/oklog/oklog v0.3.2

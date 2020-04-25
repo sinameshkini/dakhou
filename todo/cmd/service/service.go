@@ -5,9 +5,16 @@ import (
 	endpoint "dakhou/todo/pkg/endpoint"
 	grpc "dakhou/todo/pkg/grpc"
 	pb "dakhou/todo/pkg/grpc/pb"
+	http2 "dakhou/todo/pkg/http"
 	service "dakhou/todo/pkg/service"
 	"flag"
 	"fmt"
+	"net"
+	http1 "net/http"
+	"os"
+	"os/signal"
+	"syscall"
+
 	endpoint1 "github.com/go-kit/kit/endpoint"
 	log "github.com/go-kit/kit/log"
 	prometheus "github.com/go-kit/kit/metrics/prometheus"
@@ -20,20 +27,13 @@ import (
 	prometheus1 "github.com/prometheus/client_golang/prometheus"
 	promhttp "github.com/prometheus/client_golang/prometheus/promhttp"
 	grpc1 "google.golang.org/grpc"
-	"net"
-	http1 "net/http"
-	"os"
-	"os/signal"
 	appdash "sourcegraph.com/sourcegraph/appdash"
 	opentracing "sourcegraph.com/sourcegraph/appdash/opentracing"
-	"syscall"
 )
 
 var tracer opentracinggo.Tracer
 var logger log.Logger
 
-// Define our flags. Your service probably won't need to bind listeners for
-// all* supported transports, but we do it here for demonstration purposes.
 var fs = flag.NewFlagSet("todo", flag.ExitOnError)
 var debugAddr = fs.String("debug.addr", ":8080", "Debug and metrics listen address")
 var httpAddr = fs.String("http-addr", ":8081", "HTTP listen address")
@@ -49,13 +49,10 @@ var appdashAddr = fs.String("appdash-addr", "", "Enable Appdash tracing via an A
 func Run() {
 	fs.Parse(os.Args[1:])
 
-	// Create a single logger, which we'll use and give to other components.
 	logger = log.NewLogfmtLogger(os.Stderr)
 	logger = log.With(logger, "ts", log.DefaultTimestampUTC)
 	logger = log.With(logger, "caller", log.DefaultCaller)
 
-	//  Determine which tracer to use. We'll pass the tracer to all the
-	// components that use it, as a dependency
 	if *zipkinURL != "" {
 		logger.Log("tracer", "Zipkin", "URL", *zipkinURL)
 		reporter := http.NewReporter(*zipkinURL)
@@ -96,7 +93,6 @@ func Run() {
 }
 func initGRPCHandler(endpoints endpoint.Endpoints, g *group.Group) {
 	options := defaultGRPCOptions(logger, tracer)
-	// Add your GRPC options here
 
 	grpcServer := grpc.NewGRPCServer(endpoints, options)
 	grpcListener, err := net.Listen("tcp", *grpcAddr)
@@ -116,7 +112,6 @@ func initGRPCHandler(endpoints endpoint.Endpoints, g *group.Group) {
 func getServiceMiddleware(logger log.Logger) (mw []service.Middleware) {
 	mw = []service.Middleware{}
 	mw = addDefaultServiceMiddleware(logger, mw)
-	// Append your middleware here
 
 	return
 }
@@ -129,7 +124,6 @@ func getEndpointMiddleware(logger log.Logger) (mw map[string][]endpoint1.Middlew
 		Subsystem: "todo",
 	}, []string{"method", "success"})
 	addDefaultEndpointMiddleware(logger, duration, mw)
-	// Add you endpoint middleware here
 
 	return
 }
@@ -160,4 +154,21 @@ func initCancelInterrupt(g *group.Group) {
 	}, func(error) {
 		close(cancelInterrupt)
 	})
+}
+
+func initHttpHandler(endpoints endpoint.Endpoints, g *group.Group) {
+	options := defaultHttpOptions(logger, tracer)
+
+	httpHandler := http2.NewHTTPHandler(endpoints, options)
+	httpListener, err := net.Listen("tcp", *httpAddr)
+	if err != nil {
+		logger.Log("transport", "HTTP", "during", "Listen", "err", err)
+	}
+	g.Add(func() error {
+		logger.Log("transport", "HTTP", "addr", *httpAddr)
+		return http1.Serve(httpListener, httpHandler)
+	}, func(error) {
+		httpListener.Close()
+	})
+
 }
