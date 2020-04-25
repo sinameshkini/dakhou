@@ -1,0 +1,75 @@
+syntax = "proto3";
+
+package pb;
+
+
+
+//The Todo service definition.
+service Todo {
+ rpc Get            (GetRequest           ) returns (GetReply           );
+ rpc Add            (AddRequest           ) returns (AddReply           );
+ rpc SetComplete    (SetCompleteRequest   ) returns (SetCompleteReply   );
+ rpc RemoveComplete (RemoveCompleteRequest) returns (RemoveCompleteReply);
+ rpc Delete         (DeleteRequest        ) returns (DeleteReply        );
+ rpc Update         (UpdateRequest        ) returns (UpdateReply        );
+ rpc SetStar        (SetStarRequest       ) returns (SetStarReply       );
+ rpc GetChildren    (GetChildrenRequest   ) returns (GetChildrenReply   );
+ rpc GetCategory    (GetCategoryRequest   ) returns (GetCategoryReply   );
+ rpc AddCategory    (AddCategoryRequest   ) returns (AddCategoryReply   );
+ rpc UpdateCategory (UpdateCategoryRequest) returns (UpdateCategoryReply);
+ rpc DeleteCategory (DeleteCategoryRequest) returns (DeleteCategoryReply);
+ rpc GetCatChildes  (GetCatChildesRequest ) returns (GetCatChildesReply );
+}
+
+message GetRequest {}
+
+message GetReply {}
+
+message AddRequest {}
+
+message AddReply {}
+
+message SetCompleteRequest {}
+
+message SetCompleteReply {}
+
+message RemoveCompleteRequest {}
+
+message RemoveCompleteReply {}
+
+message DeleteRequest {}
+
+message DeleteReply {}
+
+message UpdateRequest {}
+
+message UpdateReply {}
+
+message SetStarRequest {}
+
+message SetStarReply {}
+
+message GetChildrenRequest {}
+
+message GetChildrenReply {}
+
+message GetCategoryRequest {}
+
+message GetCategoryReply {}
+
+message AddCategoryRequest {}
+
+message AddCategoryReply {}
+
+message UpdateCategoryRequest {}
+
+message UpdateCategoryReply {}
+
+message DeleteCategoryRequest {}
+
+message DeleteCategoryReply {}
+
+message GetCatChildesRequest {}
+
+message GetCatChildesReply {}
+
